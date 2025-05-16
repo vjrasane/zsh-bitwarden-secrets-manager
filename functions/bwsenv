@@ -1,4 +1,4 @@
-
+#!/bin/sh
 #compdef bwenv
 
 # Check required commands

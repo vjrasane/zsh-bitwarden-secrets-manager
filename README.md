@@ -2,6 +2,14 @@
 
 ZSH autoloaded function for working with Bitwarden Secrets Manager
 
+## Installation
+
+### Antigen
+
+```shell
+antigen bundle vjrasane/zsh-bitwarden-secrets-manager --branch=main
+```
+
 ## bwshell
 
 Starts a new instance of `$SHELL` with secrets injected into environment variables.

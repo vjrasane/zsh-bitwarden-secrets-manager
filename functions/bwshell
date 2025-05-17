@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 #compdef bwsenv
 
 function bwshell() {
@@ -32,20 +32,34 @@ function bwshell() {
 
   function _load_env_from_plaintext() {
     local envfile="$1"
-    source "$envfile"
-    # echo "$BWS_ACCESS_TOKEN"
-    # echo "$BWS_PROJECT_ID"
+    source "$envfile" || return 1
+    echo "$BWS_ACCESS_TOKEN"
+    echo "$BWS_PROJECT_ID"
   }
 
   function _load_env_from_ciphertext() {
     local envfile="$1"
+    source <(sops -d --input-type dotenv --output-type dotenv "$envfile") || return 1
+    echo "$BWS_ACCESS_TOKEN"
+    echo "$BWS_PROJECT_ID"
+  }
+
+  function _load_env_with_sops() {
+    set -e
+    local envfile="$1"
     if sops filestatus --input-type dotenv "$envfile" 2>/dev/null | jq -e '.encrypted == true' >/dev/null; then
-      source <(sops -d --input-type dotenv --output-type dotenv "$envfile")
+      _load_env_from_ciphertext "$envfile" || return 1
     else
-      _load_env_from_plaintext "$envfile"
+      _load_env_from_plaintext "$envfile" || return 1
     fi
-    # echo "$BWS_ACCESS_TOKEN"
-    # echo "$BWS_PROJECT_ID"
+  }
+
+  function _load_env_from_file_in_subshell() {
+    if $_IS_SOPS_INSTALLED; then
+      _load_env_with_sops "$envfile" || return 1
+    else
+      _load_env_from_plaintext "$envfile" || return 1
+    fi
   }
 
   function _load_env_from_file() {
@@ -56,16 +70,10 @@ function bwshell() {
     fi
     echo "Using config file: $envfile"
 
-    if [[ "$_IS_SOPS_INSTALLED" == true ]]; then
-      _load_env_from_ciphertext "$envfile" || return 1
-    else
-      _load_env_from_plaintext "$envfile" || return 1 
-    fi
-    # if $_IS_SOPS_INSTALLED; then
-    #   lines=( "${(@f)$(_load_env_from_ciphertext "$envfile")}" ) || return 1
-    # else
-    #   lines=( "${(@f)$(_load_env_from_plaintext "$envfile")}" ) || return 1
-    # fi
+    lines=("${(@f)$(_load_env_from_file_in_subshell "$envfile" || exit 1)}") || return 1
+
+    _ACCESS_TOKEN="${_ACCESS_TOKEN:-$lines[1]}"
+    _PROJECT_ID="${_PROJECT_ID:-$lines[2]}"
   }
 
   function _load_env_recursive() {
@@ -88,17 +96,8 @@ function bwshell() {
       _load_env_from_file "$_CONFIG_FILE" || return 1
     fi
 
-    # if [[ -n "${_ENV_ACCESS_TOKEN:+defined}" ]]; then
-    #   _ACCESS_TOKEN="${_ENV_ACCESS_TOKEN}"
-    # else
-      _PROJECT_ID="${_PROJECT_ID:-$BWS_PROJECT_ID}"
-    # fi
-
-    # if [[ -n "${_ENV_PROJECT_ID:+defined}" ]]; then
-    #   _PROJECT_ID="${_ENV_PROJECT_ID}"
-    # else
-      _ACCESS_TOKEN="${_ACCESS_TOKEN:-$BWS_ACCESS_TOKEN}"
-    # fi
+    _PROJECT_ID="${BWS_PROJECT_ID-$_PROJECT_ID}"
+    _ACCESS_TOKEN="${BWS_ACCESS_TOKEN-$_ACCESS_TOKEN}"
   }
 
   function _verify_env() {
@@ -186,8 +185,6 @@ function bwshell() {
     echo "Exiting subshell..."
   }
 
-  # trap _cleanup EXIT
-
   while [[ $# -gt 0 ]]; do
     case "$1" in
     -v | --version)
@@ -203,11 +200,11 @@ function bwshell() {
       shift 2
       ;;
     --project)
-      local _ENV_PROJECT_ID="$2"
+      _PROJECT_ID="$2"
       shift 2
       ;;
     --access-token)
-      local _ENV_ACCESS_TOKEN="$2"
+      _ACCESS_TOKEN="$2"
       shift 2
       ;;
     *) break ;;

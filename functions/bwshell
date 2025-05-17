@@ -114,8 +114,9 @@ function bwshell() {
     }
 
     echo "Available projects:"
+    echo "-------------------"
     echo "$projects" | jq -r '.[] | "* \(.name) (\(.id))"'
-
+    echo "-------------------"
     while true; do
       echo -n "Select project name (empty for no project): "
       local project_name
@@ -167,7 +168,9 @@ function bwshell() {
     }
 
     echo "Secrets to be injected:"
+    echo "-----------------------"
     echo "$secrets" | jq -r '.[] | "* \(.key)"'
+    echo "-----------------------"
     echo -n "Proceed? [y/N] "
     local confirm
     read confirm

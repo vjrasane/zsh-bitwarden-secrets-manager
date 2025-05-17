@@ -2,15 +2,15 @@
 
 ZSH autoloaded function for working with Bitwarden Secrets Manager
 
-## Requirements
+## bwshell
+
+Starts a new instance of `$SHELL` with secrets injected into environment variables.
+
+### Requirements
 
 - jq
 - [bws](https://bitwarden.com/help/secrets-manager-cli)
 - [sops](https://github.com/getsops/sops) (Optional) 
-
-## bwshell
-
-Starts a new instance of `$SHELL` with secrets injected into environment variables.
 
 ### Example usage
 
@@ -33,7 +33,7 @@ Starting subshell with secrets injected..
 
 Default config file is `.bws.env`. The command searches recursively upwards from the current directory, until it reaches `$HOME` or `/`. The found files are sourced in reverse order (i.e. lower in tree takes precedence). Sourcing is done in subshell to avoid leaking secrets into current shell. Thus, `BWS_ACCESS_TOKEN` is NOT injected into the spawned shell and must be explicitly available in secrets manager if needed.
 
-A configuration file can be explicitly specified using `BWS_CONFIG_FILE` environment variable or `--config` CLI argument. This takes precedence over all other configuration files.
+A config file can be explicitly specified using `BWS_CONFIG_FILE` environment variable or `--config` CLI argument. This takes precedence over all other configuration files.
 
 Example configration file:
 ```env

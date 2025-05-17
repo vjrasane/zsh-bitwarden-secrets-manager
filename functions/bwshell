@@ -45,7 +45,6 @@ function bwshell() {
   }
 
   function _load_env_with_sops() {
-    set -e
     local envfile="$1"
     if sops filestatus --input-type dotenv "$envfile" 2>/dev/null | jq -e '.encrypted == true' >/dev/null; then
       _load_env_from_ciphertext "$envfile" || return 1
